@@ -1,0 +1,94 @@
+#setup for data ####
+  library(tidyverse)
+  sealdrone <- read_csv("data/raw/uasdata.csv")
+  indexall <- read_csv("data/raw/oce.indices.csv")
+
+pup_data <- filter(sealdrone, class == "pup", peak.breeding == "Y") 
+pup_count <- pup_data %>%
+  group_by(year) %>% 
+  summarize(pup_count = n()) %>% 
+  rename(Year = year) %>% 
+  ungroup()
+#counts the number of pups per year and creates a new column in pup_data of these totals
+
+index_years <- filter(indexall, Year >= 2014 & Year != 2024:2025)
+soi_years <- index_years %>% 
+  select(Year, SOI) %>% 
+  mutate(Lag_Year = Year, 
+         Year = Lag_Year + 2)
+#just 2015-2024 and SOI
+
+soi_pups <- left_join(pup_count, soi_years, by = "Year") 
+
+
+#line chart for pups ####
+ggplot(data=pup_count,aes(x = year, y = pup_count))+
+  geom_point(color = "#006837FF") +
+  geom_line(color = "#238443FF", linewidth = 1, alpha = 0.5) +
+  geom_area(fill = "#006837FF", alpha = 0.2) +
+  coord_cartesian(ylim = c(800, 1220))+
+  scale_x_continuous(breaks = seq(2016,2025, by = 2)) +
+  scale_y_continuous(breaks = seq(800,1200, by = 100)) +
+  theme(axis.title = element_text(size = 10), 
+        legend.position = "none",
+        panel.background = element_rect(fill = "#E2EFDB"),
+        #plot.background = element_rect(fill = "#FFF1F1"), changes bg color
+        plot.title = element_text(face = "bold", size = 12, color ="#006837FF"),
+        plot.subtitle = element_text(size = 8)) +
+  labs(title = "E. Seal pups per breeding season",
+       subtitle = "Counts taken at the end of January each year",
+       x = "Year",
+       y = "Number of Pups")
+
+#bar chart for pups #####
+ggplot(data=pup_count, aes(x = year, y = pup_count)) +
+  geom_col(width=0.7, alpha = 0.8, color = "#006837FF") +
+  scale_x_continuous(breaks = seq(2016,2025, by = 2)) +
+  coord_cartesian(ylim = c(500, 1250))+
+  scale_y_continuous(breaks = seq(500,1200, by = 100)) +
+  theme(axis.title = element_text(size = 10), 
+        legend.position = "none",
+        panel.background = element_rect(fill = "#E2EFDB"),
+        plot.title = element_text(face = "bold", size = 12, color ="#006837FF"),
+        plot.subtitle = element_text(size = 8)) +
+  labs(title = "E. Seal Pups per Breeding Season",
+       subtitle = "Counts taken at the end of January each year",
+       x = "Year",
+       y = "Number of Pups")
+
+#line chart for SOI ####
+ggplot(data=soi_years,aes(x = Year, y = SOI))+
+  geom_point(color = "#006837FF") +
+  geom_line(color = "#238443FF", linewidth = 1, alpha = 0.5) +
+  geom_area(fill = "#78C679FF", alpha = 0.3) +
+  scale_x_continuous(breaks = seq(2014,2024, by = 2)) +
+  scale_y_continuous(breaks = seq(-1,1.25, by = 0.25)) +
+  theme(axis.title = element_text(size = 10), 
+        legend.position = "none",
+        panel.background = element_rect(fill = "#E2EFDB"),
+        #plot.background = element_rect(fill = "#FFF1F1"), changes bg color
+        plot.title = element_text(face = "bold", size = 12, color ="#006837FF"),
+        plot.subtitle = element_text(size = 10)) +
+  labs(title = "SOI per year",
+       x = "Year",
+       y = "SOI Value") +
+       geom_hline(aes(yintercept = 0), linewidth = .8, linetype = "solid", color = "#004529FF", alpha = 0.6)
+
+
+#linear regression SOI/pups ####
+ggplot(data = soi_pups,aes(x = SOI, y = pup_count))+
+  geom_point(color = "#006837FF") +
+  geom_smooth(method = "lm", formula = y~x, aes(color = "green")) +
+    theme(axis.title = element_text(size = 10), 
+        legend.position = "none",
+        panel.background = element_rect(fill = "#E2EFDB"),
+        plot.title = element_text(face = "bold", size = 12, color ="#006837FF"),
+        plot.subtitle = element_text(size = 8)) +
+  labs(title = "Linear Regression Model",
+       x = "SOI",
+       y = "Number of Pups")
+
+#additional notes ####
+
+model1 <- lm(pup_count ~ SOI, data = soi_pups)
+summary(model1)
