@@ -33,7 +33,8 @@ soi_years <- index_years %>%
   mutate(Lag_Year = Year, 
          Year = Lag_Year + 2)
 #just 2015-2024 and SOI
-soi_pups <- left_join(soi_pup_count, soi_years, by = "Year") 
+soi_pups <- left_join(soi_pup_count, soi_years, by = "Year")
+
 
 npgo_years <- index_years %>% 
   select(Year, NPGO) %>% 
@@ -81,8 +82,8 @@ ggplot(data=soi_pups,aes(x = Lag_Year, y = SOI))+
   #^^add linetype = "dotted" to change line style
   geom_area(fill = "#78C679FF", alpha = 0.3) +
   scale_x_continuous(breaks = seq(2014,2022, by = 2)) +
-  coord_cartesian(xlim = c(2014, 2022)) +
-  scale_y_continuous(breaks = seq(-1,1.25, by = 0.25)) +
+  coord_cartesian(xlim = c(2014, 2022), ylim = c(-2.5,2)) +
+  scale_y_continuous(breaks = seq(-2.5,2, by = 0.5)) +
   theme(axis.title = element_text(size = 10), 
         legend.position = "none",
         panel.background = element_rect(fill = "#E2EFDB"),
@@ -116,8 +117,9 @@ ggplot(data = pdo_pups, mapping = aes(x = Lag_Year, y = PDO)) +
        subtitle = "Lag of -1 applied to pup count years",
        x = "Year",
        y = "PDO Score") +
-  scale_x_continuous(breaks = seq(2014,2025, by = 2)) +
-  scale_y_continuous(breaks = seq(-2,1.5, by = 0.50)) +
+  scale_x_continuous(breaks = seq(2015,2023, by = 2)) +
+  coord_cartesian(xlim = c(2015, 2023), ylim = c(-2.5,2)) +
+  scale_y_continuous(breaks = seq(-2.5,2, by = 0.5)) +
   geom_hline(aes(yintercept = 0), linewidth = .8, linetype = "solid", color = "#450017", alpha = 0.6)
 #line chart for NPGO fig D ####
 ggplot(data = npgo_pups, mapping = aes(x = Lag_Year, y = NPGO)) +
@@ -134,11 +136,12 @@ ggplot(data = npgo_pups, mapping = aes(x = Lag_Year, y = NPGO)) +
        subtitle = "Lag of -1 applied to pup count years",
        x = "Year",
        y = "NPGO Score") +
-  scale_x_continuous(breaks = seq(2015,2023, by = 2)) + 
-  #scale_y_continuous(breaks = seq(0,-2, by = -0.5)) +
+  scale_x_continuous(breaks = seq(2015,2023, by = 2)) +
+  #ylim(-2.5, 1.5) +
+  coord_cartesian(xlim = c(2015, 2023), ylim = c(-2.5,2)) +
+  scale_y_continuous(breaks = seq(-2.5,2, by = 0.5)) +
   #coord_cartesian(ylim = c(0.2, -2)) ASK ROXANNE +
   geom_hline(aes(yintercept = 0), linewidth = .8, linetype = "solid", color = "#002F45", alpha = 0.6)
-
 
 
 #linear regression models:
@@ -149,8 +152,8 @@ ggplot(data = soi_pups,aes(x = SOI, y = pup_count))+
     geom_smooth(method = "lm", formula = y~x) +
    # scale_x_continuous(breaks = seq(-1.5,1.5, by = 0.5)) +
    # coord_cartesian(xlim = c(-1.25, 1.25)) +
-    coord_cartesian(ylim = c(800, 1220)) +
-    scale_y_continuous(breaks = seq(800,1200, by = 100)) +
+    coord_cartesian(ylim = c(700, 1300)) +
+    scale_y_continuous(breaks = seq(700,1300, by = 100)) +
     theme(axis.title = element_text(size = 10), 
           legend.position = "none",
           panel.background = element_rect(fill = "#E2EFDB"),
@@ -174,8 +177,8 @@ ggplot(data = soi_pups,aes(x = SOI, y = pup_count))+
   ggplot(data = pdo_pups,aes(x = PDO, y = pup_count))+
     geom_point(color = "#680037") +
     geom_smooth(method = "lm", formula = y~x, aes(color = "green")) +
-    coord_cartesian(ylim = c(700, 1220)) +
-    scale_y_continuous(breaks = seq(700,1200, by = 100)) +
+    coord_cartesian(ylim = c(700, 1300)) +
+    scale_y_continuous(breaks = seq(700,1300, by = 100)) +
     scale_x_continuous(breaks = seq(-1.75,1.5, by = 0.5)) +
     coord_cartesian(xlim = c(-1.75, 1.25)) +
     theme(axis.title = element_text(size = 10), 
@@ -199,8 +202,8 @@ ggplot(data = soi_pups,aes(x = SOI, y = pup_count))+
 ggplot(data = npgo_pups,aes(x = NPGO, y = pup_count))+
     geom_point(color = "#003768") +
     geom_smooth(method = "lm", formula = y~x, aes(color = "green")) +
-    coord_cartesian(ylim = c(800, 1200)) +
-    scale_y_continuous(breaks = seq(800,1200, by = 100)) +
+    coord_cartesian(ylim = c(700, 1300)) +
+    scale_y_continuous(breaks = seq(700,1300, by = 100)) +
     #ask roxanne
     scale_x_continuous(breaks = seq(-2.25,0, by = 0.5)) +
     coord_cartesian(xlim = c(-2.25, 0)) +
