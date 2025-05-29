@@ -245,12 +245,35 @@ ggplot(data = npgo_pups,aes(x = NPGO, y = pup_count))+
   #^^ shows linear model data, Y~X
 
 
-#linear regression PUPS AND FEMALES AND SOI!! ####
-  ggplot(data = rat,aes(x = NPGO, y = pup_count))+
+#linear reg SOI AND PUP RATIO ####
+  ggplot(data = soi_ratio, aes(x = SOI, y = ratio))+
+    geom_point(color = "#006837FF") +
+    geom_smooth(method = "lm", formula = y~x, aes(color = "green")) +
+    coord_cartesian(ylim = c(1, 1.5)) +
+    scale_y_continuous(breaks = seq(1,1.5, by = 0.1)) +
+    scale_x_continuous(breaks = seq(-0.5,1.5, by = 0.5)) +
+    coord_cartesian(xlim = c(-0.5, 1.5)) +
+    theme(axis.title = element_text(size = 10), 
+          legend.position = "none",
+          panel.background = element_rect(fill = "#E2EFDB"),
+          plot.title = element_text(face = "bold", size = 10, color ="#006837FF"),
+          plot.subtitle = element_text(size = 8),
+          plot.tag = element_text(),
+          plot.tag.position = c(0.03, 0.98)) +
+    labs(title = "Pup Abundance as a Function of SOI",
+         #subtitle = "Counts taken at the end of January each year",
+         tag = "3)",
+         x = "SOI Value",
+         y = "Pups per Female")
+  
+  lmNPGO <- lm(pup_count ~ NPGO, data = npgo_pups)
+  summary(lmNPGO)
+#linear reg NPGO AND PUP RATIO ####
+  ggplot(data = npgo_ratio, aes(x = NPGO, y = ratio))+
     geom_point(color = "#003768") +
     geom_smooth(method = "lm", formula = y~x, aes(color = "green")) +
-    coord_cartesian(ylim = c(700, 1300)) +
-    scale_y_continuous(breaks = seq(700,1300, by = 100)) +
+    coord_cartesian(ylim = c(1, 1.5)) +
+    scale_y_continuous(breaks = seq(1,1.5, by = 0.1)) +
     scale_x_continuous(breaks = seq(-2.25,-0.75, by = 0.5)) +
     coord_cartesian(xlim = c(-2.3, -0.75)) +
     theme(axis.title = element_text(size = 10), 
@@ -264,7 +287,31 @@ ggplot(data = npgo_pups,aes(x = NPGO, y = pup_count))+
          #subtitle = "Counts taken at the end of January each year",
          tag = "3)",
          x = "NPGO Value",
-         y = "Number of Pups")
+         y = "Pups per Female")
+  
+  lmNPGO <- lm(pup_count ~ NPGO, data = npgo_pups)
+  summary(lmNPGO)
+  
+#linear reg PDO AND PUP RATIO ####
+  ggplot(data = pdo_ratio, aes(x = PDO, y = ratio))+
+    geom_point(color = "#680037") +
+    geom_smooth(method = "lm", formula = y~x, aes()) +
+    coord_cartesian(ylim = c(1, 1.5)) +
+    scale_y_continuous(breaks = seq(1,1.5, by = 0.1)) +
+    scale_x_continuous(breaks = seq(-1.75,0.25, by = 0.5)) +
+    coord_cartesian(xlim = c(-1.75, 0.25)) +
+    theme(axis.title = element_text(size = 10), 
+          legend.position = "none",
+          panel.background = element_rect(fill = "#EFDBE2"),
+          plot.title = element_text(face = "bold", size = 10, color ="#680037"),
+          plot.subtitle = element_text(size = 8),
+          plot.tag = element_text(),
+          plot.tag.position = c(0.03, 0.98)) +
+    labs(title = "Pup Abundance as a Function of PDO",
+         #subtitle = "Counts taken at the end of January each year",
+         tag = "3)",
+         x = "PDO Value",
+         y = "Pups per Female")
   
   lmNPGO <- lm(pup_count ~ NPGO, data = npgo_pups)
   summary(lmNPGO)
