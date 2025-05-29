@@ -8,15 +8,15 @@ soi_pup_data <- filter(sealdrone, class == "pup", peak.breeding == "Y", between(
 #arrow creates the object "pup_data" by pulling from a filtered subset
 #of the class data
 
-pup_data <- filter(sealdrone, class == "pup", peak.breeding == "Y", between(year, 2019, 2024)) 
-#arrow creates the object "pup_data" by pulling from a filtered subset
-#of the class data
-
 soi_pup_data <- soi_pup_data %>%
   group_by(year) %>% 
   summarize(pup_count = n()) %>% 
   rename(Year = year) %>% 
   ungroup()
+
+pup_data <- filter(sealdrone, class == "pup", peak.breeding == "Y", between(year, 2019, 2024)) 
+#arrow creates the object "pup_data" by pulling from a filtered subset
+#of the class data
 
 pup_count <- pup_data %>%
   group_by(year) %>% 
@@ -26,7 +26,7 @@ pup_count <- pup_data %>%
 #counts the number of pups per year and creates a new column in pup_data
 #of these totals
 
-ratio <-filter(sealdrone, peak.breeding == "Y", between(year, 2019, 2024)) %>% 
+ratio <- filter(sealdrone, peak.breeding == "Y", between(year, 2019, 2024)) %>% 
   group_by(year,class) %>% 
   summarize(count = n()) %>% 
   rename(Year = year) %>% 
@@ -38,14 +38,19 @@ ratio <- ratio %>%
 ratio <- ratio %>% 
   mutate(ratio = pup/female)
 
+
 index_years <- filter(indexall, between(Year, 2017, 2024))
 #filters to just 2017-24, excludes 2025
+
+
 soi_years <- index_years %>% 
   select(Year, SOI) %>% 
   mutate(Lag_Year = Year, 
          Year = Lag_Year + 2)
 #just 2017-2024 and SOI
 soi_pups <- left_join(soi_pup_data, soi_years, by = "Year")
+soi_ratio <- left_join(ratio, soi_years, by = "Year") %>% 
+  select(Year, ratio, SOI, Lag_Year)
 
 
 npgo_years <- index_years %>% 
@@ -53,6 +58,8 @@ npgo_years <- index_years %>%
   mutate(Lag_Year = Year, 
          Year = Lag_Year + 1)
 npgo_pups <- left_join(pup_count, npgo_years, by = "Year") 
+npgo_ratio <- left_join(ratio, npgo_years, by = "Year") %>% 
+  select(Year, ratio, NPGO, Lag_Year)
 
 
 pdo_years <- index_years %>% 
@@ -60,6 +67,8 @@ pdo_years <- index_years %>%
   mutate(Lag_Year = Year, 
          Year = Lag_Year + 1)
 pdo_pups <- left_join(pup_count, pdo_years, by = "Year") 
+pdo_ratio <- left_join(ratio, pdo_years, by = "Year") %>% 
+  select(Year, ratio, PDO, Lag_Year)
 
 
 #bar chart for pups fig A #####
@@ -236,13 +245,29 @@ ggplot(data = npgo_pups,aes(x = NPGO, y = pup_count))+
   #^^ shows linear model data, Y~X
 
 
-
+#linear regression PUPS AND FEMALES AND SOI!! ####
+  ggplot(data = rat,aes(x = NPGO, y = pup_count))+
+    geom_point(color = "#003768") +
+    geom_smooth(method = "lm", formula = y~x, aes(color = "green")) +
+    coord_cartesian(ylim = c(700, 1300)) +
+    scale_y_continuous(breaks = seq(700,1300, by = 100)) +
+    scale_x_continuous(breaks = seq(-2.25,-0.75, by = 0.5)) +
+    coord_cartesian(xlim = c(-2.3, -0.75)) +
+    theme(axis.title = element_text(size = 10), 
+          legend.position = "none",
+          panel.background = element_rect(fill = "#DBE7EF"),
+          plot.title = element_text(face = "bold", size = 10, color ="#003768"),
+          plot.subtitle = element_text(size = 8),
+          plot.tag = element_text(),
+          plot.tag.position = c(0.03, 0.98)) +
+    labs(title = "Pup Abundance as a Function of NPGO",
+         #subtitle = "Counts taken at the end of January each year",
+         tag = "3)",
+         x = "NPGO Value",
+         y = "Number of Pups")
   
-  
-  
-  
-
-
+  lmNPGO <- lm(pup_count ~ NPGO, data = npgo_pups)
+  summary(lmNPGO)
 #random notes ####
 #correlogram workshop ####
   
