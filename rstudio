@@ -4,15 +4,15 @@
   indexall <- read_csv("data/raw/oce.indices.csv")
 #loading library, importing dataframes
 
-soi_pup_data <- filter(sealdrone, class == "pup", peak.breeding == "Y", between(year, 2016, 2025)) 
+soi_pup_data <- filter(sealdrone, class == "pup", peak.breeding == "Y", between(year, 2017, 2024)) 
 #arrow creates the object "pup_data" by pulling from a filtered subset
 #of the class data
 
-pup_data <- filter(sealdrone, class == "pup", peak.breeding == "Y", between(year, 2016, 2024)) 
+pup_data <- filter(sealdrone, class == "pup", peak.breeding == "Y", between(year, 2019, 2024)) 
 #arrow creates the object "pup_data" by pulling from a filtered subset
 #of the class data
 
-soi_pup_count <- soi_pup_data %>%
+soi_pup_data <- soi_pup_data %>%
   group_by(year) %>% 
   summarize(pup_count = n()) %>% 
   rename(Year = year) %>% 
@@ -26,14 +26,26 @@ pup_count <- pup_data %>%
 #counts the number of pups per year and creates a new column in pup_data
 #of these totals
 
-index_years <- filter(indexall, between(Year, 2014, 2024))
-#filters to just 2015-24, excludes 2025
+ratio <-filter(sealdrone, peak.breeding == "Y", between(year, 2019, 2024)) %>% 
+  group_by(year,class) %>% 
+  summarize(count = n()) %>% 
+  rename(Year = year) %>% 
+  ungroup()
+
+ratio <- ratio %>% 
+  pivot_wider(names_from = class, 
+              values_from = count) 
+ratio <- ratio %>% 
+  mutate(ratio = pup/female)
+
+index_years <- filter(indexall, between(Year, 2017, 2024))
+#filters to just 2017-24, excludes 2025
 soi_years <- index_years %>% 
   select(Year, SOI) %>% 
   mutate(Lag_Year = Year, 
          Year = Lag_Year + 2)
-#just 2015-2024 and SOI
-soi_pups <- left_join(soi_pup_count, soi_years, by = "Year")
+#just 2017-2024 and SOI
+soi_pups <- left_join(soi_pup_data, soi_years, by = "Year")
 
 
 npgo_years <- index_years %>% 
@@ -81,8 +93,8 @@ ggplot(data=soi_pups,aes(x = Lag_Year, y = SOI))+
   geom_line(color = "#238443FF", linewidth = 1, alpha = 0.5) +
   #^^add linetype = "dotted" to change line style
   geom_area(fill = "#78C679FF", alpha = 0.3) +
-  scale_x_continuous(breaks = seq(2014,2022, by = 2)) +
-  coord_cartesian(xlim = c(2014, 2022), ylim = c(-2.5,2)) +
+  scale_x_continuous(breaks = seq(2017,2022, by = 1)) +
+  coord_cartesian(xlim = c(2017, 2022), ylim = c(-2.5,2)) +
   scale_y_continuous(breaks = seq(-2.5,2, by = 0.5)) +
   theme(axis.title = element_text(size = 10), 
         legend.position = "none",
@@ -117,8 +129,8 @@ ggplot(data = pdo_pups, mapping = aes(x = Lag_Year, y = PDO)) +
        subtitle = "Lag of -1 applied to pup count years",
        x = "Year",
        y = "PDO Score") +
-  scale_x_continuous(breaks = seq(2015,2023, by = 2)) +
-  coord_cartesian(xlim = c(2015, 2023), ylim = c(-2.5,2)) +
+  scale_x_continuous(breaks = seq(2018,2023, by = 1)) +
+  coord_cartesian(xlim = c(2018, 2023), ylim = c(-2.5,2)) +
   scale_y_continuous(breaks = seq(-2.5,2, by = 0.5)) +
   geom_hline(aes(yintercept = 0), linewidth = .8, linetype = "solid", color = "#450017", alpha = 0.6)
 #line chart for NPGO fig D ####
@@ -136,24 +148,24 @@ ggplot(data = npgo_pups, mapping = aes(x = Lag_Year, y = NPGO)) +
        subtitle = "Lag of -1 applied to pup count years",
        x = "Year",
        y = "NPGO Score") +
-  scale_x_continuous(breaks = seq(2015,2023, by = 2)) +
+  scale_x_continuous(breaks = seq(2018,2023, by = 1)) +
   #ylim(-2.5, 1.5) +
-  coord_cartesian(xlim = c(2015, 2023), ylim = c(-2.5,2)) +
+  coord_cartesian(xlim = c(2018, 2023), ylim = c(-2.5,2)) +
   scale_y_continuous(breaks = seq(-2.5,2, by = 0.5)) +
   #coord_cartesian(ylim = c(0.2, -2)) ASK ROXANNE +
   geom_hline(aes(yintercept = 0), linewidth = .8, linetype = "solid", color = "#002F45", alpha = 0.6)
 
-
+#
 #linear regression models:
-
+#
 #linear regression SOI/pups fig 1 ####
 ggplot(data = soi_pups,aes(x = SOI, y = pup_count))+
     geom_point(color = "#006837FF") +
-    geom_smooth(method = "lm", formula = y~x) +
+    geom_smooth(method = "lm", formula = y~x,aes(color = "green")) +
    # scale_x_continuous(breaks = seq(-1.5,1.5, by = 0.5)) +
    # coord_cartesian(xlim = c(-1.25, 1.25)) +
-    coord_cartesian(ylim = c(700, 1300)) +
-    scale_y_continuous(breaks = seq(700,1300, by = 100)) +
+    coord_cartesian(ylim = c(850, 1350)) +
+    scale_y_continuous(breaks = seq(900,1300, by = 100)) +
     theme(axis.title = element_text(size = 10), 
           legend.position = "none",
           panel.background = element_rect(fill = "#E2EFDB"),
@@ -162,7 +174,7 @@ ggplot(data = soi_pups,aes(x = SOI, y = pup_count))+
           plot.tag = element_text(),
           plot.tag.position = c(0.03, 0.98)) +
     labs(title = "Pup Abundance as a Function of SOI",
-         subtitle = "Pup count from two years prior to SOI value?????? ask roxanne",
+         #subtitle = "Pup count from two years prior to SOI value?????? ask roxanne",
          x = "SOI Value",
          y = "Number of Pups",
          tag = "1)")
@@ -176,11 +188,11 @@ ggplot(data = soi_pups,aes(x = SOI, y = pup_count))+
 
   ggplot(data = pdo_pups,aes(x = PDO, y = pup_count))+
     geom_point(color = "#680037") +
-    geom_smooth(method = "lm", formula = y~x, aes(color = "green")) +
-    coord_cartesian(ylim = c(700, 1300)) +
-    scale_y_continuous(breaks = seq(700,1300, by = 100)) +
-    scale_x_continuous(breaks = seq(-1.75,1.5, by = 0.5)) +
-    coord_cartesian(xlim = c(-1.75, 1.25)) +
+    geom_smooth(method = "lm", formula = y~x) +
+    coord_cartesian(ylim = c(800, 1400)) +
+    scale_y_continuous(breaks = seq(800,1400, by = 100)) +
+    scale_x_continuous(breaks = seq(-1.75,.25, by = 0.5)) +
+    coord_cartesian(xlim = c(-1.75, .25)) +
     theme(axis.title = element_text(size = 10), 
           legend.position = "none",
           panel.background = element_rect(fill = "#EFDBE2"),
@@ -204,9 +216,8 @@ ggplot(data = npgo_pups,aes(x = NPGO, y = pup_count))+
     geom_smooth(method = "lm", formula = y~x, aes(color = "green")) +
     coord_cartesian(ylim = c(700, 1300)) +
     scale_y_continuous(breaks = seq(700,1300, by = 100)) +
-    #ask roxanne
-    scale_x_continuous(breaks = seq(-2.25,0, by = 0.5)) +
-    coord_cartesian(xlim = c(-2.25, 0)) +
+    scale_x_continuous(breaks = seq(-2.25,-0.75, by = 0.5)) +
+    coord_cartesian(xlim = c(-2.3, -0.75)) +
     theme(axis.title = element_text(size = 10), 
           legend.position = "none",
           panel.background = element_rect(fill = "#DBE7EF"),
