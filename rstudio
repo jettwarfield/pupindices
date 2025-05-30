@@ -266,8 +266,8 @@ ggplot(data = npgo_pups,aes(x = NPGO, y = pup_count))+
          x = "SOI Value",
          y = "Pups per Female")
   
-  lmNPGO <- lm(pup_count ~ NPGO, data = npgo_pups)
-  summary(lmNPGO)
+  lmSOIratio <- lm(ratio ~ SOI, data = soi_ratio)
+  summary(lmSOIratio)
 #linear reg NPGO AND PUP RATIO ####
   ggplot(data = npgo_ratio, aes(x = NPGO, y = ratio))+
     geom_point(color = "#003768") +
@@ -289,8 +289,8 @@ ggplot(data = npgo_pups,aes(x = NPGO, y = pup_count))+
          x = "NPGO Value",
          y = "Pups per Female")
   
-  lmNPGO <- lm(pup_count ~ NPGO, data = npgo_pups)
-  summary(lmNPGO)
+  lmNPGOratio <- lm(ratio ~ NPGO, data = npgo_ratio)
+  summary(lmNPGOratio)
   
 #linear reg PDO AND PUP RATIO ####
   ggplot(data = pdo_ratio, aes(x = PDO, y = ratio))+
@@ -313,8 +313,9 @@ ggplot(data = npgo_pups,aes(x = NPGO, y = pup_count))+
          x = "PDO Value",
          y = "Pups per Female")
   
-  lmNPGO <- lm(pup_count ~ NPGO, data = npgo_pups)
-  summary(lmNPGO)
+  lmPDOratio <- lm(ratio ~ PDO, data = pdo_ratio)
+  summary(lmPDOratio)
+  
 #random notes ####
 #correlogram workshop ####
   
