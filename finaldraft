@@ -4,6 +4,7 @@
 
 #SETUP/DATA CLEANING ####
 library(tidyverse)
+library(patchwork)
 sealdrone <- read_csv("data/raw/uasdata.csv")
 indexall <- read_csv("data/raw/oce.indices.csv")
 #loading library, importing dataframes
