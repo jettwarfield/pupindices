@@ -126,8 +126,7 @@ fig_1 <- ggplot(data=pup_count, aes(x = Year, y = pup_count)) +
   theme(plot.caption = element_text(hjust = 0, face = "plain", size = 10))
 fig_1
 
-#how to put charts on same figure + same y axis scales? 
-#line chart for ratio fig 3####
+#line chart for ratio fig 2####
 ratio_chart <- ggplot(data=ratio,aes(x = Year, y = ratio))+
   geom_point(color = "#4A4A4A") +
   geom_line(color = "#656565", linewidth = 1, alpha = 0.75) +
@@ -146,7 +145,7 @@ ratio_chart <- ggplot(data=ratio,aes(x = Year, y = ratio))+
   labs(#title = "Seal Pups per Female Present",
        x = "Year",
        y = "Pups per Female",)
-#line chart for SOI fig 2 A #### 
+#line chart for SOI fig 3 A #### 
 soi_line <- ggplot(data=soi_pups,aes(x = Lag_Year, y = SOI))+
   geom_point(color = "#006837FF") +
   geom_line(color = "#238443FF", linewidth = 1, alpha = 0.5) +
@@ -173,7 +172,7 @@ soi_line <- ggplot(data=soi_pups,aes(x = Lag_Year, y = SOI))+
   geom_hline(aes(yintercept = 0), linewidth = .8, linetype = "solid", color = "#004529FF", alpha = 0.6)
 
 
-#line chart for PDO fig 2 B ####
+#line chart for PDO fig 3 B ####
 pdo_line <- ggplot(data = pdo_pups, mapping = aes(x = Lag_Year, y = PDO)) +
   geom_line(color = "#BB2F5E", linewidth = 1, alpha = 0.5) +
   geom_area(fill = "#C67892", alpha = 0.3) +
@@ -193,7 +192,7 @@ pdo_line <- ggplot(data = pdo_pups, mapping = aes(x = Lag_Year, y = PDO)) +
   coord_cartesian(xlim = c(2018, 2023), ylim = c(-2.5,2)) +
   scale_y_continuous(breaks = seq(-2.5,2, by = 1)) +
   geom_hline(aes(yintercept = 0), linewidth = .8, linetype = "solid", color = "#450017", alpha = 0.6)
-#line chart for NPGO fig 2 C ####
+#line chart for NPGO fig 3 C ####
 npgo_line <- ggplot(data = npgo_pups, mapping = aes(x = Lag_Year, y = NPGO)) +
   geom_line(color = "#235684", linewidth = 1, alpha = 0.5) +
   geom_area(fill = "#7892C6", alpha = 0.3) +
@@ -216,7 +215,7 @@ npgo_line <- ggplot(data = npgo_pups, mapping = aes(x = Lag_Year, y = NPGO)) +
   #coord_cartesian(ylim = c(0.2, -2)) ASK ROXANNE +
   geom_hline(aes(yintercept = 0), linewidth = .8, linetype = "solid", color = "#002F45", alpha = 0.6)
 #LINEAR REGRESSION MODELS####
-##linear regression SOI/pups fig 3 A ####
+##linear regression SOI/pups fig 3 D ####
 ggplot(data = soi_pups,aes(x = SOI, y = pup_count))+
   geom_point(color = "#006837FF") +
   geom_smooth(method = "lm", formula = y~x,aes(color = "green")) +
@@ -242,7 +241,7 @@ summary(lmSOI)
 #^^ shows linear model data, Y~X
 
 
-##linear regression PDO fig 3 B ####
+##linear regression PDO fig 3 E ####
 
 ggplot(data = pdo_pups,aes(x = PDO, y = pup_count))+
   geom_point(color = "#680037") +
@@ -268,7 +267,7 @@ lmPDO <- lm(pup_count ~ PDO, data = pdo_pups)
 summary(lmPDO)
 #^^ shows linear model data, Y~X
 
-##linear regression NPGO fig 3 C ####
+##linear regression NPGO fig 3 F ####
 ggplot(data = npgo_pups,aes(x = NPGO, y = pup_count))+
   geom_point(color = "#003768") +
   geom_smooth(method = "lm", formula = y~x, aes(color = "green")) +
@@ -294,7 +293,7 @@ summary(lmNPGO)
 #^^ shows linear model data, Y~X
 
 
-##linear reg SOI AND PUP RATIO for two year lag fig 2 D####
+##linear reg SOI AND PUP RATIO for two year lag ####
 soi_reg <- ggplot(data = soi_ratio, aes(x = SOI, y = ratio))+
   geom_point(color = "#006837FF") +
   geom_smooth(method = "lm", formula = y~x, aes(color = "green")) +
@@ -345,7 +344,7 @@ ggplot(data = soi_1ratio, aes(x = SOI, y = ratio))+
 
 lmSOI1ratio <- lm(ratio ~ SOI, data = soi_1ratio)
 summary(lmSOI1ratio)
-##linear reg NPGO AND PUP RATIO for one year lag fig 2 F####
+##linear reg NPGO AND PUP RATIO for one year lag ####
 npgo_reg <- ggplot(data = npgo_ratio, aes(x = NPGO, y = ratio))+
   geom_point(color = "#003768") +
   geom_smooth(method = "lm", formula = y~x, aes(color = "green"), linetype = "dashed", se = FALSE) +
