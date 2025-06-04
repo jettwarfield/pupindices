@@ -1,1 +1,477 @@
 
+# Overview ----------------------------------------------------------------
+
+
+#SETUP/DATA CLEANING ####
+library(tidyverse)
+sealdrone <- read_csv("data/raw/uasdata.csv")
+indexall <- read_csv("data/raw/oce.indices.csv")
+#loading library, importing dataframes
+
+soi_pup_data <- filter(sealdrone, class == "pup", peak.breeding == "Y", between(year, 2017, 2024)) 
+#arrow creates the object "pup_data" by pulling from a filtered subset
+#of the class data
+
+soi_pup_data <- soi_pup_data %>%
+  group_by(year) %>% 
+  summarize(pup_count = n()) %>% 
+  rename(Year = year) %>% 
+  ungroup()
+
+pup_data <- filter(sealdrone, class == "pup", peak.breeding == "Y", between(year, 2019, 2024)) 
+#arrow creates the object "pup_data" by pulling from a filtered subset
+#of the class data
+
+pup_count <- pup_data %>%
+  group_by(year) %>% 
+  summarize(pup_count = n()) %>% 
+  rename(Year = year) %>% 
+  ungroup()
+#counts the number of pups per year and creates a new column in pup_data
+#of these totals
+
+ratio <- filter(sealdrone, peak.breeding == "Y", between(year, 2019, 2024)) %>% 
+  group_by(year,class) %>% 
+  summarize(count = n()) %>% 
+  rename(Year = year) %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = class, 
+              values_from = count) %>% 
+  mutate(ratio = pup/female)
+
+
+index_years <- filter(indexall, between(Year, 2017, 2024))
+#filters to just 2017-24, excludes 2025
+
+#2 year lag
+soi_years <- index_years %>% 
+  select(Year, SOI) %>% 
+  mutate(Lag_Year = Year, 
+         Year = Lag_Year + 2)
+#1 year lag
+soi_1yr <- index_years %>% 
+  select(Year, SOI) %>% 
+  mutate(Lag_Year = Year,
+         Year = Lag_Year +1)
+#just 2017-2024 and SOI
+soi_pups <- left_join(soi_pup_data, soi_years, by = "Year")
+soi_ratio <- left_join(ratio, soi_years, by = "Year") %>% 
+  select(Year, ratio, SOI, Lag_Year)
+#1 year lag
+soi_1ratio <- left_join(ratio, soi_1yr, by = "Year") %>% 
+  select(Year, ratio, SOI, Lag_Year)
+
+#1 year lag NPGO
+npgo_years <- index_years %>% 
+  select(Year, NPGO) %>% 
+  mutate(Lag_Year = Year, 
+         Year = Lag_Year + 1)
+npgo_pups <- left_join(pup_count, npgo_years, by = "Year") 
+npgo_ratio <- left_join(ratio, npgo_years, by = "Year") %>% 
+  select(Year, ratio, NPGO, Lag_Year)
+
+#2 year lag NPGO
+npgo_2years <- index_years %>% 
+  select(Year, NPGO) %>% 
+  mutate(Lag_Year = Year, 
+         Year = Lag_Year + 2)
+npgo_2pups <- left_join(pup_count, npgo_2years, by = "Year") 
+npgo_2ratio <- left_join(ratio, npgo_2years, by = "Year") %>% 
+  select(Year, ratio, NPGO, Lag_Year)
+
+#1 year lag PDO
+pdo_years <- index_years %>% 
+  select(Year, PDO) %>% 
+  mutate(Lag_Year = Year, 
+         Year = Lag_Year + 1)
+pdo_pups <- left_join(pup_count, pdo_years, by = "Year") 
+pdo_ratio <- left_join(ratio, pdo_years, by = "Year") %>% 
+  select(Year, ratio, PDO, Lag_Year)
+
+#2 year lag PDO
+pdo_2years <- index_years %>% 
+  select(Year, PDO) %>% 
+  mutate(Lag_Year = Year, 
+         Year = Lag_Year + 1)
+pdo_2pups <- left_join(pup_count, pdo_2years, by = "Year") 
+pdo_2ratio <- left_join(ratio, pdo_2years, by = "Year") %>% 
+  select(Year, ratio, PDO, Lag_Year)
+
+#bar chart for pups fig 1 #####
+fig_1 <- ggplot(data=pup_count, aes(x = Year, y = pup_count)) +
+  geom_col(width=0.7, alpha = 0.8, color = "#656565") +
+  scale_x_continuous(breaks = seq(2016,2025, by = 1)) +
+  coord_cartesian(ylim = c(500, 1250))+
+  scale_y_continuous(breaks = seq(500,1200, by = 100)) +
+  #^^ scale modifies the axes intervals
+  theme(axis.title = element_text(size = 10), 
+        legend.position = "none",
+        panel.background = element_rect(fill = "#E8E7E7"),
+        #plot.background = element_rect(fill = "#FFF1F1"), changes bg color
+        plot.title = element_text(face = "plain", size = 12, color ="#383838"),
+        plot.subtitle = element_text(size = 8),
+        plot.tag = element_text(),
+        plot.tag.position = c(0.03, 0.98),
+        axis.title.x = element_text(color ="#383838"),
+        axis.title.y = element_text(color ="#383838")) +
+  labs(title = "Fig. 1) Seal Pups Presence at Año Nuevo Mainland",
+       #subtitle = "Counts taken late January",
+       caption = "Fig. 1) Northern elephant seal pup populations of Año Nuevo Reserve Mainland from 2016-2024 
+       on varrying days in late January as extrapolated from the analyzed orthomosaics 
+       into PicTerra. Data is from the UAS drone imagery only during peak breeding season.",
+       #tag = "1)",
+       x = "Year",
+       y = "Number of Pups")&
+  theme(plot.caption = element_text(hjust = 0, face = "plain", size = 10))
+fig_1
+
+#how to put charts on same figure + same y axis scales? 
+#line chart for ratio fig 3####
+ratio_chart <- ggplot(data=ratio,aes(x = Year, y = ratio))+
+  geom_point(color = "#4A4A4A") +
+  geom_line(color = "#656565", linewidth = 1, alpha = 0.75) +
+  #geom_area(fill = "#78C679FF", alpha = 0.3) +
+  #scale_x_continuous(breaks = seq(2017,2022, by = 1)) +
+  #coord_cartesian(xlim = c(2017, 2022), ylim = c(-2.5,2)) +
+  #scale_y_continuous(breaks = seq(-2.5,2, by = 0.5)) +
+  theme(axis.title = element_text(size = 10), 
+        legend.position = "none",
+        panel.background = element_rect(fill = "#E8E7E7"),
+        #plot.background = element_rect(fill = "#FFF1F1"), changes bg color
+        plot.subtitle = element_text(size = 8),
+        plot.title = element_text(face = "bold", size = 12, color ="#383838"),
+        plot.tag = element_text(),
+        plot.tag.position = c(0.03, 0.98)) +
+  labs(#title = "Seal Pups per Female Present",
+       x = "Year",
+       y = "Pups per Female",)
+#line chart for SOI fig 2 A #### 
+soi_line <- ggplot(data=soi_pups,aes(x = Lag_Year, y = SOI))+
+  geom_point(color = "#006837FF") +
+  geom_line(color = "#238443FF", linewidth = 1, alpha = 0.5) +
+  #^^add linetype = "dotted" to change line style
+  geom_area(fill = "#78C679FF", alpha = 0.3) +
+  scale_x_continuous(breaks = seq(2017,2022, by = 1)) +
+  coord_cartesian(xlim = c(2017, 2022), ylim = c(-2.5,2)) +
+  scale_y_continuous(breaks = seq(-2.5,2, by = 1)) +
+  theme(axis.title = element_text(size = 10), 
+        legend.position = "none",
+        panel.background = element_rect(fill = "#E2EFDB"),
+        #plot.background = element_rect(fill = "#FFF1F1"), changes bg color
+        plot.subtitle = element_text(size = 8),
+        plot.title = element_text(face = "bold", size = 12, color ="#006837FF"),
+        plot.tag = element_text(),
+        plot.tag.position = c(0.03, 0.98)) +
+  labs(title = "SOI over Time",
+       #subtitle = "Lag of -2 applied to years",
+       tag = "A)",
+       x = "Year",
+       y = "SOI Score",) +
+  theme(axis.title.x = element_blank()) +
+  theme(axis.title.y = element_blank()) +
+  geom_hline(aes(yintercept = 0), linewidth = .8, linetype = "solid", color = "#004529FF", alpha = 0.6)
+
+
+#line chart for PDO fig 2 B ####
+pdo_line <- ggplot(data = pdo_pups, mapping = aes(x = Lag_Year, y = PDO)) +
+  geom_line(color = "#BB2F5E", linewidth = 1, alpha = 0.5) +
+  geom_area(fill = "#C67892", alpha = 0.3) +
+  geom_point(colour = "#680037") +
+  theme(panel.background = element_rect(fill = "#EFDBE2"),
+        plot.tag = element_text(),
+        plot.tag.position = c(0.03, 0.98),
+        plot.title = element_text(face = "bold", size = 12, color ="#680037"),
+        plot.subtitle = element_text(size = 8)) +
+  labs(title = "PDO Scores over Time",
+       tag = "B)",
+       #subtitle = "Lag of -1 applied to years",
+       x = "Year",
+       y = "Index Score") +
+  theme(axis.title.x = element_blank()) +
+  scale_x_continuous(breaks = seq(2018,2023, by = 1)) +
+  coord_cartesian(xlim = c(2018, 2023), ylim = c(-2.5,2)) +
+  scale_y_continuous(breaks = seq(-2.5,2, by = 1)) +
+  geom_hline(aes(yintercept = 0), linewidth = .8, linetype = "solid", color = "#450017", alpha = 0.6)
+#line chart for NPGO fig 2 C ####
+npgo_line <- ggplot(data = npgo_pups, mapping = aes(x = Lag_Year, y = NPGO)) +
+  geom_line(color = "#235684", linewidth = 1, alpha = 0.5) +
+  geom_area(fill = "#7892C6", alpha = 0.3) +
+  geom_point(colour = "#003768") +
+  theme(panel.background = element_rect(fill = "#DBE7EF"),
+        plot.tag = element_text(),
+        plot.tag.position = c(0.03, 0.98),
+        plot.title = element_text(face = "bold", size = 12, color ="#003768"),
+        plot.subtitle = element_text(size = 8)) +
+  labs(title = "NPGO Scores over Time",
+       tag = "C)",
+       #subtitle = "Lag of -1 applied to years",
+       x = "Year",
+       y = "NPGO Score") +
+  theme(axis.title.y = element_blank())+
+  scale_x_continuous(breaks = seq(2018,2023, by = 1)) +
+  #ylim(-2.5, 1.5) +
+  coord_cartesian(xlim = c(2018, 2023), ylim = c(-2.5,2)) +
+  scale_y_continuous(breaks = seq(-2.5,2, by = 1)) +
+  #coord_cartesian(ylim = c(0.2, -2)) ASK ROXANNE +
+  geom_hline(aes(yintercept = 0), linewidth = .8, linetype = "solid", color = "#002F45", alpha = 0.6)
+#LINEAR REGRESSION MODELS####
+##linear regression SOI/pups fig 3 A ####
+ggplot(data = soi_pups,aes(x = SOI, y = pup_count))+
+  geom_point(color = "#006837FF") +
+  geom_smooth(method = "lm", formula = y~x,aes(color = "green")) +
+  # scale_x_continuous(breaks = seq(-1.5,1.5, by = 0.5)) +
+  # coord_cartesian(xlim = c(-1.25, 1.25)) +
+  coord_cartesian(ylim = c(850, 1350)) +
+  scale_y_continuous(breaks = seq(900,1300, by = 100)) +
+  theme(axis.title = element_text(size = 10), 
+        legend.position = "none",
+        panel.background = element_rect(fill = "#E2EFDB"),
+        plot.title = element_text(face = "bold", size = 10, color ="#006837FF"),
+        plot.subtitle = element_text(size = 8),
+        plot.tag = element_text(),
+        plot.tag.position = c(0.03, 0.98)) +
+  labs(title = "Pup Abundance as a Function of SOI",
+       #subtitle = "Pup count from two years prior to SOI value?????? ask roxanne",
+       x = "SOI Value",
+       y = "Number of Pups",
+       tag = "1)")
+
+lmSOI <- lm(pup_count ~ SOI, data = soi_pups)
+summary(lmSOI)
+#^^ shows linear model data, Y~X
+
+
+##linear regression PDO fig 3 B ####
+
+ggplot(data = pdo_pups,aes(x = PDO, y = pup_count))+
+  geom_point(color = "#680037") +
+  geom_smooth(method = "lm", formula = y~x) +
+  coord_cartesian(ylim = c(800, 1400)) +
+  scale_y_continuous(breaks = seq(800,1400, by = 100)) +
+  scale_x_continuous(breaks = seq(-1.75,.25, by = 0.5)) +
+  coord_cartesian(xlim = c(-1.75, .25)) +
+  theme(axis.title = element_text(size = 10), 
+        legend.position = "none",
+        panel.background = element_rect(fill = "#EFDBE2"),
+        plot.title = element_text(face = "bold", size = 10, color ="#680037"),
+        plot.subtitle = element_text(size = 8),
+        plot.tag = element_text(),
+        plot.tag.position = c(0.03, 0.98)) +
+  labs(title = "Pup Abundance as a Function of PDO",
+       #subtitle = "Counts taken at the end of January each year",
+       tag = "2)",
+       x = "PDO Value",
+       y = "Number of Pups")
+
+lmPDO <- lm(pup_count ~ PDO, data = pdo_pups)
+summary(lmPDO)
+#^^ shows linear model data, Y~X
+
+##linear regression NPGO fig 3 C ####
+ggplot(data = npgo_pups,aes(x = NPGO, y = pup_count))+
+  geom_point(color = "#003768") +
+  geom_smooth(method = "lm", formula = y~x, aes(color = "green")) +
+  coord_cartesian(ylim = c(700, 1300)) +
+  scale_y_continuous(breaks = seq(700,1300, by = 100)) +
+  scale_x_continuous(breaks = seq(-2.25,-0.75, by = 0.5)) +
+  coord_cartesian(xlim = c(-2.3, -0.75)) +
+  theme(axis.title = element_text(size = 10), 
+        legend.position = "none",
+        panel.background = element_rect(fill = "#DBE7EF"),
+        plot.title = element_text(face = "bold", size = 10, color ="#003768"),
+        plot.subtitle = element_text(size = 8),
+        plot.tag = element_text(),
+        plot.tag.position = c(0.03, 0.98)) +
+  labs(title = "Pup Abundance as a Function of NPGO",
+       #subtitle = "Counts taken at the end of January each year",
+       tag = "3)",
+       x = "NPGO Value",
+       y = "Number of Pups")
+
+lmNPGO <- lm(pup_count ~ NPGO, data = npgo_pups)
+summary(lmNPGO)
+#^^ shows linear model data, Y~X
+
+
+##linear reg SOI AND PUP RATIO for two year lag fig 2 D####
+soi_reg <- ggplot(data = soi_ratio, aes(x = SOI, y = ratio))+
+  geom_point(color = "#006837FF") +
+  geom_smooth(method = "lm", formula = y~x, aes(color = "green")) +
+  coord_cartesian(ylim = c(1, 1.5)) +
+  scale_y_continuous(breaks = seq(1,1.5, by = 0.1)) +
+  scale_x_continuous(breaks = seq(-0.5,1.5, by = 0.5)) +
+  coord_cartesian(xlim = c(-0.5, 1.5)) +
+  theme(axis.title = element_text(size = 10), 
+        legend.position = "none",
+        panel.background = element_rect(fill = "#E2EFDB"),
+        plot.title = element_text(face = "bold", size = 10, color ="#006837FF"),
+        plot.subtitle = element_text(size = 8),
+        plot.tag = element_text(),
+        plot.tag.position = c(0.03, 0.98)) +
+  labs(title = "Pup to Female Ratio as a 
+       Function of SOI",
+       #subtitle = "Counts taken at the end of January each year",
+       tag = "D)",
+       x = "SOI Value",
+       y = "Pups per Female") +
+  theme(axis.title.x = element_blank()) +
+  theme(axis.title.y = element_blank())
+
+lmSOIratio <- lm(ratio ~ SOI, data = soi_ratio)
+summary(lmSOIratio)
+confint(lmSOIratio)
+
+###linear reg SOI AND PUP RATIO for one year lag####
+ggplot(data = soi_1ratio, aes(x = SOI, y = ratio))+
+  geom_point(color = "#006837FF") +
+  geom_smooth(method = "lm", formula = y~x, aes(color = "green")) +
+  coord_cartesian(ylim = c(1, 1.5)) +
+  scale_y_continuous(breaks = seq(1,1.5, by = 0.1)) +
+  scale_x_continuous(breaks = seq(-0.5,1.5, by = 0.5)) +
+  coord_cartesian(xlim = c(-0.5, 1.5)) +
+  theme(axis.title = element_text(size = 10), 
+        legend.position = "none",
+        panel.background = element_rect(fill = "#E2EFDB"),
+        plot.title = element_text(face = "bold", size = 10, color ="#006837FF"),
+        plot.subtitle = element_text(size = 8),
+        plot.tag = element_text(),
+        plot.tag.position = c(0.03, 0.98)) +
+  labs(title = "Pup to Female Ratio as a Function of SOI",
+       #subtitle = "Counts taken at the end of January each year",
+       #tag = "1)",
+       x = "SOI Value",
+       y = "Pups per Female")
+
+lmSOI1ratio <- lm(ratio ~ SOI, data = soi_1ratio)
+summary(lmSOI1ratio)
+##linear reg NPGO AND PUP RATIO for one year lag fig 2 F####
+npgo_reg <- ggplot(data = npgo_ratio, aes(x = NPGO, y = ratio))+
+  geom_point(color = "#003768") +
+  geom_smooth(method = "lm", formula = y~x, aes(color = "green"), linetype = "dashed", se = FALSE) +
+  coord_cartesian(ylim = c(1, 1.5)) +
+  scale_y_continuous(breaks = seq(1,1.5, by = 0.1)) +
+  scale_x_continuous(breaks = seq(-2.25,-0.75, by = 0.5)) +
+  coord_cartesian(xlim = c(-2.3, -0.75)) +
+  theme(axis.title = element_text(size = 10), 
+        legend.position = "none",
+        panel.background = element_rect(fill = "#DBE7EF"),
+        plot.title = element_text(face = "bold", size = 10, color ="#003768"),
+        plot.subtitle = element_text(size = 8),
+        plot.tag = element_text(),
+        plot.tag.position = c(0.03, 0.98)) +
+  labs(title = "Pup to Female Ratio as a 
+       Function of NPGO",
+       #subtitle = "Counts taken at the end of January each year",
+       tag = "F)",
+       x = "Index Value",
+       y = "Pups per Female") +
+  theme(axis.title.y = element_blank())
+
+lmNPGOratio <- lm(ratio ~ NPGO, data = npgo_ratio)
+summary(lmNPGOratio)
+
+###linear reg NPGO AND PUP RATIO for two year lag####
+ggplot(data = npgo_2ratio, aes(x = NPGO, y = ratio))+
+  geom_point(color = "#003768") +
+  geom_smooth(method = "lm", formula = y~x, aes(color = "green"), linetype = "dashed", se = FALSE) +
+  coord_cartesian(ylim = c(1, 1.5)) +
+  scale_y_continuous(breaks = seq(1,1.5, by = 0.1)) +
+  scale_x_continuous(breaks = seq(-2.25,-0.75, by = 0.5)) +
+  coord_cartesian(xlim = c(-2.3, -0.75)) +
+  theme(axis.title = element_text(size = 10), 
+        legend.position = "none",
+        panel.background = element_rect(fill = "#DBE7EF"),
+        plot.title = element_text(face = "bold", size = 10, color ="#003768"),
+        plot.subtitle = element_text(size = 8),
+        plot.tag = element_text(),
+        plot.tag.position = c(0.03, 0.98)) +
+  labs(title = "Pup to Female Ratio as a 
+       Function of NPGO",
+       subtitle = "-2 year lag",
+       tag = "F)",
+       x = "NPGO Value",
+       y = "Pups per Female") +
+  theme(axis.title.y = element_blank())
+
+lmNPGO2ratio <- lm(ratio ~ NPGO, data = npgo_2ratio)
+summary(lmNPGO2ratio)
+##linear reg PDO AND PUP RATIO for one year lag fig 2 E####
+pdo_reg <- ggplot(data = pdo_ratio, aes(x = PDO, y = ratio))+
+  geom_point(color = "#680037") +
+  geom_smooth(method = "lm", formula = y~x, aes(), linetype ="dashed", se = FALSE) +
+  coord_cartesian(ylim = c(1, 1.5)) +
+  scale_y_continuous(breaks = seq(1,1.5, by = 0.1)) +
+  scale_x_continuous(breaks = seq(-1.75,0.25, by = 0.5)) +
+  coord_cartesian(xlim = c(-1.75, 0.25)) +
+  theme(axis.title = element_text(size = 10), 
+        legend.position = "none",
+        panel.background = element_rect(fill = "#EFDBE2"),
+        plot.title = element_text(face = "bold", size = 10, color ="#680037"),
+        plot.subtitle = element_text(size = 8),
+        plot.tag = element_text(),
+        plot.tag.position = c(0.03, 0.98)) +
+  labs(title = "Pup to Female Ratio as a 
+       Function of PDO",
+       #subtitle = "Counts taken at the end of January each year",
+       tag = "E)",
+       x = "PDO Value",
+       y = "Pups per Female") +
+  theme(axis.title.x = element_blank())
+
+lmPDOratio <- lm(ratio ~ PDO, data = pdo_ratio)
+summary(lmPDOratio)
+pdo_reg
+
+###linear reg PDO AND PUP RATIO for two year lag####
+ggplot(data = pdo_2ratio, aes(x = PDO, y = ratio))+
+  geom_point(color = "#680037") +
+  geom_smooth(method = "lm", formula = y~x, aes()) +
+  coord_cartesian(ylim = c(1, 1.5)) +
+  scale_y_continuous(breaks = seq(1,1.5, by = 0.1)) +
+  scale_x_continuous(breaks = seq(-1.75,0.25, by = 0.5)) +
+  coord_cartesian(xlim = c(-1.75, 0.25)) +
+  theme(axis.title = element_text(size = 10), 
+        legend.position = "none",
+        panel.background = element_rect(fill = "#EFDBE2"),
+        plot.title = element_text(face = "bold", size = 10, color ="#680037"),
+        plot.subtitle = element_text(size = 8),
+        plot.tag = element_text(),
+        plot.tag.position = c(0.03, 0.98)) +
+  labs(title = "Pup to Female Ratio as a Function of PDO",
+       subtitle = "-2 year lag",
+       #tag = "D)",
+       x = "PDO Value",
+       y = "Pups per Female")
+
+lmPDO2ratio <- lm(ratio ~ PDO, data = pdo_ratio)
+summary(lmPDO2ratio)
+#CREATING FIGURES####
+##Fig 3 ####
+fig_3 <- (soi_line | soi_reg)/
+  (pdo_line | pdo_reg)/
+  (npgo_line | npgo_reg) +
+  plot_annotation(
+  title = 'Fig 3) Oceanographic indices and pup to female ratios',
+  caption = 'Fig. 3) Panels A-C show changes in oceanographic conditions and are color coded with the 
+  relative relationship plots by index. A lag of -2 was applied to years in panel A and a lag of
+  -1 was applied to years in panels B & C. Panels D-F show the relationship between each index
+  and pup to female ratio. Red lines show a negative trend, blue lines show a positive trend,
+  dashed lines indicate no statistical correlation, and solid lines indicate a statistically
+  significant correlation in addition to the grey area showing the confidence interval. The 
+  results of panel D show a p-value of 0.03324, coefficient of -0.13759, and a confidence interval
+  of -0.09445 to -0.18073. Panel E had a p-value of 0.1463. Panel F had a p-value of 0.2472.') &
+  theme(plot.caption = element_text(hjust = 0, face = "plain", size = 10, ))
+  
+fig_3
+
+
+##Fig 2####
+fig_2 <- (ratio_chart) +
+  plot_annotation(
+    title = 'Fig. 2) Pup to Female Ratio Through Years',
+    caption = 'Fig. 2) Line chart shows changes in pup per female ratio as during 
+    years drone surveys were conducted. All data is taken from 
+    surveys conducted in late January.') &
+  theme(plot.caption = element_text(hjust = 0, face = "plain", size = 10))
+fig_2
+
